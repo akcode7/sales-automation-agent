@@ -19,7 +19,18 @@ async def find_businesses_on_maps(query: str, location: str):
     
     async with httpx.AsyncClient() as client:
         res = await client.post(url, headers=headers, json=data)
+        
+        # Check for API errors
+        if res.status_code != 200:
+            error_msg = res.json().get("error", {}).get("message", "Unknown error")
+            raise ValueError(f"Google Maps API error: {error_msg} (Status: {res.status_code})")
+        
         places = res.json().get("places", [])
+        
+        # If no places found, raise error instead of returning empty
+        if not places:
+            raise ValueError(f"No businesses found for '{query}' in {location}. Try a different search.")
+        
         return [{
             "company_name": p.get("displayName", {}).get("text"),
             "address": p.get("formattedAddress"),
