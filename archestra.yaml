@@ -1,0 +1,23 @@
+version: "1.0"
+
+agent:
+  name: "sales-automation-agent"
+  description: "An AI agent that finds leads, researches them using Tavily, saves to HubSpot, and sends emails."
+  
+  # The runtime environment
+  runtime:
+    type: "python"
+    version: "3.11"
+    
+  # How to start your MCP server
+  execution:
+    command: "python"
+    args: ["-m", "src.server"]
+    env_file: ".env"
+
+  # Capabilities/Tools provided by this agent (matches your server.py)
+  capabilities:
+    - name: "search_and_research"
+      description: "Search for businesses and research them"
+    - name: "process_and_email_lead"
+      description: "Save lead to CRM and send email"
