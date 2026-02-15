@@ -1,27 +1,28 @@
 import os
 import httpx
-from src.utils import fetch_api
-
-async def search_leads_serp(query: str):
-    """Search for lead contact info using SerpApi."""
-    api_key = os.getenv("SERPAPI_API_KEY")
-    params = {
-        "engine": "google",
-        "q": f"{query} email linkedin",
-        "api_key": api_key
-    }
-    data = await fetch_api("https://serpapi.com/search", params=params)
-    results = data.get("organic_results", [])
-    return [{"title": r.get("title"), "link": r.get("link"), "snippet": r.get("snippet")} for r in results[:3]]
 
 async def research_company_tavily(company_name: str):
-    """Perform deep AI research on a company using Tavily."""
+    """Deep search for company news and key decision makers."""
     api_key = os.getenv("TAVILY_API_KEY")
+    if not api_key:
+        raise ValueError("TAVILY_API_KEY environment variable is not set")
+    
+    # We craft the query to explicitly look for leadership
+    query = f"Who are the key decision makers at {company_name}? Also find recent business news."
+    
     payload = {
         "api_key": api_key,
-        "query": f"latest business news and tech stack for {company_name}",
-        "search_depth": "advanced"
+        "query": query,
+        "search_depth": "advanced",
+        "include_answer": True # This gives the AI a direct summary
     }
+    
     async with httpx.AsyncClient() as client:
         res = await client.post("https://api.tavily.com/search", json=payload)
-        return res.json().get("results", [])
+        data = res.json()
+        
+        # Tavily's "answer" field is gold for LLMs
+        return {
+            "summary": data.get("answer"),
+            "raw_results": data.get("results", [])[:5]
+        }
